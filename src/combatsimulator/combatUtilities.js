@@ -222,7 +222,7 @@ class CombatUtilities {
             }
 
             let mitigatedDamage = Math.ceil(targetDamageTakenRatio * damageRoll);
-            if (CombatUtilities.deterministic) {
+            if (CombatUtilities.deterministic && !source.isPlayer && target.isPlayer) {
                 mitigatedDamage *= hitChance;
             }
             damageDone = Math.min(mitigatedDamage, target.combatDetails.currentHitpoints);
@@ -292,6 +292,9 @@ class CombatUtilities {
                     retaliationDamageRoll = ((retaliationMinDamage + retaliationMaxDamage) / 2) * retaliationHitChance;
                 }
                 let mitigatedRetaliationDamage = Math.ceil(sourceDamageTakenRatio * retaliationDamageRoll);
+                if (CombatUtilities.deterministic && source.isPlayer) {
+                    mitigatedRetaliationDamage *= retaliationHitChance;
+                }
                 retaliationDamageDone = Math.min(mitigatedRetaliationDamage, source.combatDetails.currentHitpoints);
                 source.combatDetails.currentHitpoints -= retaliationDamageDone;
             }
