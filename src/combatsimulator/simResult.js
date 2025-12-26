@@ -55,6 +55,9 @@ class SimResult {
     }
 
     addEncounterEnemies(enemies, waveIndex) {
+        if (!enemies || enemies.length === 0) {
+            return;
+        }
         this.encounterEnemyStats.push({
             wave: waveIndex,
             enemies: enemies.map(e => ({ hrid: e.hrid, stats: SimResult.extractUnitStats(e) }))

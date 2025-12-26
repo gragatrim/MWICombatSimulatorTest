@@ -666,7 +666,7 @@ class CombatSimulator extends EventTarget {
                 console.log("WARN: Some enemies have no experience rate");
             }
 
-            let totalExp = this.enemies.map(enemy => enemy.experience * enemy.experienceRate).reduce((a, b) => a + b, 0);
+            let totalExp = this.enemies?.map(enemy => enemy.experience * enemy.experienceRate).reduce((a, b) => a + b, 0) ?? 0;
             this.players.forEach(player => {
                 this.simResult.addExperienceGain(player, totalExp / this.players.length);
             });
@@ -698,7 +698,8 @@ class CombatSimulator extends EventTarget {
             !this.players.some((player) => player.combatDetails.currentHitpoints > 0)
         ) {
             if (this.zone.isDungeon) {
-                console.log("All Players died at wave #" + (this.zone.encountersKilled - 1) + " with ememies: " + this.enemies.map(enemy => (enemy.hrid+"("+(enemy.combatDetails.currentHitpoints*100/enemy.combatDetails.maxHitpoints).toFixed(2)+"%)")).join(", "));
+                const enemyStatus = this.enemies ? this.enemies.map(enemy => (enemy.hrid+"("+(enemy.combatDetails.currentHitpoints*100/enemy.combatDetails.maxHitpoints).toFixed(2)+"%)")).join(", ") : "n/a";
+                console.log("All Players died at wave #" + (this.zone.encountersKilled - 1) + " with ememies: " + enemyStatus);
 
                 this.saveWipeLogsToSimResult(this.zone.encountersKilled - 1);
                 // console.log(this.simResult)
