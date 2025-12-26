@@ -35,6 +35,8 @@ class SimResult {
         this.maxEnrageStack = 0;
 
         this.wipeEvents = [];
+        this.playerStats = {};
+        this.encounterEnemyStats = [];
     }
 
     addWipeEvent(logs, simulationTime, wave) {
@@ -44,6 +46,44 @@ class SimResult {
             wave: wave,
             timestamp: new Date().toISOString()
         });
+    }
+
+    capturePlayerStats(players) {
+        players.forEach(p => {
+            this.playerStats[p.hrid] = SimResult.extractUnitStats(p);
+        });
+    }
+
+    addEncounterEnemies(enemies, waveIndex) {
+        this.encounterEnemyStats.push({
+            wave: waveIndex,
+            enemies: enemies.map(e => ({ hrid: e.hrid, stats: SimResult.extractUnitStats(e) }))
+        });
+    }
+
+    static extractUnitStats(unit) {
+        const cd = unit.combatDetails;
+        return {
+            combatStyle: cd.combatStats.combatStyleHrid,
+            damageType: cd.combatStats.damageType,
+            maxHp: cd.maxHitpoints,
+            maxMp: cd.maxManapoints,
+            armor: cd.totalArmor,
+            waterRes: cd.totalWaterResistance,
+            natureRes: cd.totalNatureResistance,
+            fireRes: cd.totalFireResistance,
+            stabAcc: cd.stabAccuracyRating,
+            slashAcc: cd.slashAccuracyRating,
+            smashAcc: cd.smashAccuracyRating,
+            rangedAcc: cd.rangedAccuracyRating,
+            magicAcc: cd.magicAccuracyRating,
+            stabDmg: cd.stabMaxDamage,
+            slashDmg: cd.slashMaxDamage,
+            smashDmg: cd.smashMaxDamage,
+            rangedDmg: cd.rangedMaxDamage,
+            magicDmg: cd.magicMaxDamage,
+            attackInterval: cd.combatStats.attackInterval,
+        };
     }
     
     addDeath(unit) {

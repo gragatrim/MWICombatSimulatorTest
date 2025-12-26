@@ -327,6 +327,9 @@ class CombatSimulator extends EventTarget {
             }
             this.players[i].reset(this.simulationTime);
         }
+        if (event.time == 0) {
+            this.simResult.capturePlayerStats(this.players);
+        }
         let regenTickEvent = new RegenTickEvent(this.simulationTime + REGEN_TICK_INTERVAL);
         this.eventQueue.addEvent(regenTickEvent);
 
@@ -389,6 +392,8 @@ class CombatSimulator extends EventTarget {
         this.eventQueue.clearEventsOfType(AbilityCastEndEvent.type);
 
         this.startAttacks();
+
+        this.simResult.addEncounterEnemies(this.enemies, this.zone.encountersKilled - 1);
     }
 
     startAttacks() {

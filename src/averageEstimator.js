@@ -426,6 +426,20 @@ No-RNG Revenue/hr: ${summary.noRngRevenuePerHour.toLocaleString(undefined, { max
 Deaths/hr: ${summary.deathsPerHour.toLocaleString(undefined, { maximumFractionDigits: 2 })}`;
         container.appendChild(pre);
     });
+
+    const debug = document.createElement("pre");
+    const firstEnemies = simResult.encounterEnemyStats?.[0]?.enemies ?? [];
+    const enemyDebug = firstEnemies.map(e => {
+        const s = e.stats;
+        return `${e.hrid} -> HP:${s.maxHp} Armor:${s.armor} Res(W/N/F):${s.waterRes}/${s.natureRes}/${s.fireRes} Acc(stab/slash/smash/ranged/magic):${s.stabAcc}/${s.slashAcc}/${s.smashAcc}/${s.rangedAcc}/${s.magicAcc} Dmg(stab/slash/smash/ranged/magic):${s.stabDmg}/${s.slashDmg}/${s.smashDmg}/${s.rangedDmg}/${s.magicDmg} Interval:${s.attackInterval}`;
+    }).join("\n");
+
+    const playerDebug = Object.entries(simResult.playerStats ?? {}).map(([hrid, s]) => {
+        return `${hrid} -> HP:${s.maxHp} Armor:${s.armor} Res(W/N/F):${s.waterRes}/${s.natureRes}/${s.fireRes} Acc(stab/slash/smash/ranged/magic):${s.stabAcc}/${s.slashAcc}/${s.smashAcc}/${s.rangedAcc}/${s.magicAcc} Dmg(stab/slash/smash/ranged/magic):${s.stabDmg}/${s.slashDmg}/${s.smashDmg}/${s.rangedDmg}/${s.magicDmg} Interval:${s.attackInterval}`;
+    }).join("\n");
+
+    debug.textContent = `--- Debug Stats ---\nPlayers:\n${playerDebug || "n/a"}\n\nFirst Encounter Enemies:\n${enemyDebug || "n/a"}`;
+    container.appendChild(debug);
 }
 
 estimatorWorker.onmessage = function (event) {
