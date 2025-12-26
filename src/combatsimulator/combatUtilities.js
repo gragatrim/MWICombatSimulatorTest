@@ -222,8 +222,7 @@ class CombatUtilities {
             }
 
             let mitigatedDamage = Math.ceil(targetDamageTakenRatio * damageRoll);
-            let adjustedDamage = CombatUtilities.deterministic ? mitigatedDamage * hitChance : mitigatedDamage;
-            damageDone = Math.min(adjustedDamage, target.combatDetails.currentHitpoints);
+            damageDone = Math.min(mitigatedDamage, target.combatDetails.currentHitpoints);
             target.combatDetails.currentHitpoints -= damageDone;
         }
 

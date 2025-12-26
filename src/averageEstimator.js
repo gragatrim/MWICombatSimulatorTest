@@ -360,6 +360,7 @@ function calcDropMaps(simResult, playerHrid) {
 function buildSummary(simResult) {
     const hours = simResult.simulatedTime / ONE_HOUR;
     const summaries = [];
+    const encountersPerHour = hours > 0 ? simResult.encounters / hours : 0;
 
     const selectedPlayers = Object.keys(simResult.experienceGained);
     selectedPlayers.forEach((playerHrid) => {
@@ -368,6 +369,9 @@ function buildSummary(simResult) {
         for (const skill in xpGained) {
             xpPerHour[skill] = xpGained[skill] / hours;
         }
+
+        const deathsForPlayer = simResult.deaths[playerHrid] ?? 0;
+        const deathsPerHour = hours > 0 ? deathsForPlayer / hours : 0;
 
         const { totalDropMap, noRngTotalDropMap } = !simResult.isDungeon ? calcDropMaps(simResult, playerHrid) : { totalDropMap: new Map(), noRngTotalDropMap: new Map() };
         let revenue = 0;
@@ -395,19 +399,21 @@ function buildSummary(simResult) {
             profitPerHour: (revenue - expenses) / hours,
             expensesPerHour: expenses / hours,
             noRngRevenuePerHour: noRngRevenue / hours,
-            noRngProfitPerHour: (noRngRevenue - expenses) / hours
+            noRngProfitPerHour: (noRngRevenue - expenses) / hours,
+            deathsPerHour
         });
     });
 
-    return summaries;
+    return { summaries, encountersPerHour };
 }
 
-function renderSummary(summaries, simResult) {
+function renderSummary(result, simResult) {
+    const { summaries, encountersPerHour } = result;
     const container = document.getElementById("result");
     container.innerHTML = "";
 
     const header = document.createElement("pre");
-    header.textContent = `Zone: ${simResult.zoneName} | Difficulty: ${simResult.difficultyTier} | Dungeon: ${simResult.isDungeon ? "Yes" : "No"} | Sim hours: ${(simResult.simulatedTime / ONE_HOUR).toFixed(2)}`;
+    header.textContent = `Zone: ${simResult.zoneName} | Difficulty: ${simResult.difficultyTier} | Dungeon: ${simResult.isDungeon ? "Yes" : "No"} | Sim hours: ${(simResult.simulatedTime / ONE_HOUR).toFixed(2)} | Encounters/hr: ${encountersPerHour.toLocaleString(undefined, { maximumFractionDigits: 2 })}`;
     container.appendChild(header);
 
     summaries.forEach((summary) => {
@@ -416,7 +422,8 @@ function renderSummary(summaries, simResult) {
 `== ${summary.player} ==
 XP/hr: ${Object.entries(summary.xpPerHour).map(([k, v]) => `${k}: ${v.toLocaleString(undefined, { maximumFractionDigits: 0 })}`).join(", ")}
 Revenue/hr: ${summary.revenuePerHour.toLocaleString(undefined, { maximumFractionDigits: 2 })} | Profit/hr: ${summary.profitPerHour.toLocaleString(undefined, { maximumFractionDigits: 2 })}
-No-RNG Revenue/hr: ${summary.noRngRevenuePerHour.toLocaleString(undefined, { maximumFractionDigits: 2 })} | No-RNG Profit/hr: ${summary.noRngProfitPerHour.toLocaleString(undefined, { maximumFractionDigits: 2 })}`;
+No-RNG Revenue/hr: ${summary.noRngRevenuePerHour.toLocaleString(undefined, { maximumFractionDigits: 2 })} | No-RNG Profit/hr: ${summary.noRngProfitPerHour.toLocaleString(undefined, { maximumFractionDigits: 2 })}
+Deaths/hr: ${summary.deathsPerHour.toLocaleString(undefined, { maximumFractionDigits: 2 })}`;
         container.appendChild(pre);
     });
 }
