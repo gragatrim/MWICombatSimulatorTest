@@ -46,6 +46,8 @@ class CombatSimulator extends EventTarget {
             count: 0,
             maxSize: 200
         };
+
+        this.enemyRespawnInterval = CombatUtilities.deterministic ? ONE_SECOND : ENEMY_RESPAWN_INTERVAL;
     }
 
         addToWipeLogs(logEntry) {
@@ -656,7 +658,7 @@ class CombatSimulator extends EventTarget {
         if (this.enemies && !this.enemies.some((enemy) => enemy.combatDetails.currentHitpoints > 0)) {
             this.eventQueue.clearEventsOfType(AutoAttackEvent.type);
             // this.eventQueue.clearEventsOfType(AbilityCastEndEvent.type);
-            let enemyRespawnEvent = new EnemyRespawnEvent(this.simulationTime + ENEMY_RESPAWN_INTERVAL);
+            let enemyRespawnEvent = new EnemyRespawnEvent(this.simulationTime + this.enemyRespawnInterval);
             this.eventQueue.addEvent(enemyRespawnEvent);
 
             //calc exp before clear

@@ -224,7 +224,7 @@ class CombatUtilities {
             let mitigatedDamage = Math.ceil(targetDamageTakenRatio * damageRoll);
             if (CombatUtilities.deterministic) {
                 if (!source.isPlayer && target.isPlayer) {
-                    mitigatedDamage *= hitChance * hitChance;
+                    mitigatedDamage *= hitChance;
                 } else if (source.isPlayer && !target.isPlayer) {
                     mitigatedDamage *= (2 - hitChance); // boost player DPS to offset deterministic averaging
                 }
@@ -297,7 +297,7 @@ class CombatUtilities {
                 }
                 let mitigatedRetaliationDamage = Math.ceil(sourceDamageTakenRatio * retaliationDamageRoll);
                 if (CombatUtilities.deterministic && source.isPlayer) {
-                    mitigatedRetaliationDamage *= retaliationHitChance * retaliationHitChance;
+                    mitigatedRetaliationDamage *= retaliationHitChance;
                 }
                 retaliationDamageDone = Math.min(mitigatedRetaliationDamage, source.combatDetails.currentHitpoints);
                 source.combatDetails.currentHitpoints -= retaliationDamageDone;
