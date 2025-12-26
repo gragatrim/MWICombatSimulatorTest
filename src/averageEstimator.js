@@ -191,8 +191,7 @@ function calcCombatLevel(staminaLevel, intelligenceLevel, defenseLevel, attackLe
 }
 
 function onEstimate() {
-    const simulationHours = Number(document.getElementById("simulationHours").value || "1");
-    const simTimeLimit = simulationHours * ONE_HOUR;
+    const simTimeLimit = 4 * ONE_HOUR; // fixed window, we use per-encounter rates below
     const selectedPlayers = getSelectedPlayers();
     if (selectedPlayers.length === 0) {
         alert("Select at least one player.");
@@ -358,20 +357,22 @@ function calcDropMaps(simResult, playerHrid) {
 }
 
 function buildSummary(simResult) {
-    const hours = simResult.simulatedTime / ONE_HOUR;
+    const encounters = Math.max(simResult.encounters, 1);
+    const avgEncounterSeconds = (simResult.simulatedTime / ONE_SECOND) / encounters;
+    const perHourFactor = avgEncounterSeconds > 0 ? 3600 / avgEncounterSeconds : 0;
     const summaries = [];
-    const encountersPerHour = hours > 0 ? simResult.encounters / hours : 0;
+    const encountersPerHour = perHourFactor;
 
     const selectedPlayers = Object.keys(simResult.experienceGained);
     selectedPlayers.forEach((playerHrid) => {
         const xpGained = simResult.experienceGained[playerHrid];
         const xpPerHour = {};
         for (const skill in xpGained) {
-            xpPerHour[skill] = xpGained[skill] / hours;
+            xpPerHour[skill] = xpGained[skill] / encounters * perHourFactor;
         }
 
         const deathsForPlayer = simResult.deaths[playerHrid] ?? 0;
-        const deathsPerHour = hours > 0 ? deathsForPlayer / hours : 0;
+        const deathsPerHour = perHourFactor * deathsForPlayer / encounters;
 
         const { totalDropMap, noRngTotalDropMap } = !simResult.isDungeon ? calcDropMaps(simResult, playerHrid) : { totalDropMap: new Map(), noRngTotalDropMap: new Map() };
         let revenue = 0;
@@ -392,15 +393,16 @@ function buildSummary(simResult) {
 
         summaries.push({
             player: playerHrid,
-            hours,
+            encounters,
             xpPerHour,
             revenue,
-            revenuePerHour: revenue / hours,
-            profitPerHour: (revenue - expenses) / hours,
-            expensesPerHour: expenses / hours,
-            noRngRevenuePerHour: noRngRevenue / hours,
-            noRngProfitPerHour: (noRngRevenue - expenses) / hours,
-            deathsPerHour
+            revenuePerHour: revenue / encounters * perHourFactor,
+            profitPerHour: (revenue - expenses) / encounters * perHourFactor,
+            expensesPerHour: expenses / encounters * perHourFactor,
+            noRngRevenuePerHour: noRngRevenue / encounters * perHourFactor,
+            noRngProfitPerHour: (noRngRevenue - expenses) / encounters * perHourFactor,
+            deathsPerHour,
+            avgEncounterSeconds
         });
     });
 
@@ -413,7 +415,7 @@ function renderSummary(result, simResult) {
     container.innerHTML = "";
 
     const header = document.createElement("pre");
-    header.textContent = `Zone: ${simResult.zoneName} | Difficulty: ${simResult.difficultyTier} | Dungeon: ${simResult.isDungeon ? "Yes" : "No"} | Sim hours: ${(simResult.simulatedTime / ONE_HOUR).toFixed(2)} | Encounters/hr: ${encountersPerHour.toLocaleString(undefined, { maximumFractionDigits: 2 })}`;
+    header.textContent = `Zone: ${simResult.zoneName} | Difficulty: ${simResult.difficultyTier} | Dungeon: ${simResult.isDungeon ? "Yes" : "No"} | Encounters/hr: ${encountersPerHour.toLocaleString(undefined, { maximumFractionDigits: 2 })}`;
     container.appendChild(header);
 
     summaries.forEach((summary) => {
