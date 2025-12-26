@@ -1,4 +1,5 @@
 import actionDetailMap from "./data/actionDetailMap.json";
+import CombatUtilities from "./combatUtilities";
 import Monster from "./monster";
 
 class Zone {
@@ -16,6 +17,17 @@ class Zone {
         this.dungeonsCompleted = 0;
         this.dungeonsFailed = 0;
         this.finalWave = false;
+        this.deterministicCounter = 0;
+    }
+
+    nextDeterministic() {
+        // simple low-cost pseudo random to cover deterministic runs
+        this.deterministicCounter += 1;
+        return Math.abs(Math.sin(this.deterministicCounter * 12.9898) * 43758.5453) % 1;
+    }
+
+    nextRandom() {
+        return CombatUtilities.deterministic ? this.nextDeterministic() : Math.random();
     }
 
     getRandomEncounter() {
@@ -31,7 +43,7 @@ class Zone {
         let totalStrength = 0;
 
         outer: for (let i = 0; i < this.monsterSpawnInfo.randomSpawnInfo.maxSpawnCount; i++) {
-            let randomWeight = totalWeight * Math.random();
+            let randomWeight = totalWeight * this.nextRandom();
             let cumulativeWeight = 0;
 
             for (const spawn of this.monsterSpawnInfo.randomSpawnInfo.spawns) {
@@ -87,7 +99,7 @@ class Zone {
             let totalStrength = 0;
 
             outer: for (let i = 0; i < monsterSpawns.maxSpawnCount; i++) {
-                let randomWeight = totalWeight * Math.random();
+                let randomWeight = totalWeight * this.nextRandom();
                 let cumulativeWeight = 0;
 
                 for (const spawn of monsterSpawns.spawns) {
