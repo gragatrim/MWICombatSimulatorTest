@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>MWI Average Combat Estimator</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.2.0/css/bootstrap.min.css" integrity="sha512-XWTTruHZEYJsxV3W/lSXG1n3Q39YIWOstqvmFsdNEEQfHoZ6vm6E9GK2OrF6DSJSpIbRbi+Nn0WDPID9O7xB2Q==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+</head>
+<body class="p-3">
+    <div class="container-fluid">
+        <h3>MWI Average Estimator</h3>
+        <p class="text-muted">Paste the group player JSON (same format as the simulator export) and pick your target zone or dungeon to get a deterministic XP/Income estimate.</p>
+
+        <div class="row mb-3">
+            <div class="col-md-6">
+                <label for="playerDataTextarea" class="form-label">Player Data Map</label>
+                <textarea id="playerDataTextarea" class="form-control" rows="10"></textarea>
+                <div class="mt-2">
+                    <button id="loadPlayerDataBtn" class="btn btn-primary btn-sm">Load Player Data</button>
+                    <button id="resetPlayerDataBtn" class="btn btn-outline-secondary btn-sm">Reset to Defaults</button>
+                </div>
+            </div>
+            <div class="col-md-6">
+                <div class="mb-3">
+                    <label class="form-label">Players to include</label>
+                    <div class="d-flex gap-3">
+                        <div><input type="checkbox" id="playerCheck1" checked /> Player 1</div>
+                        <div><input type="checkbox" id="playerCheck2" /> Player 2</div>
+                        <div><input type="checkbox" id="playerCheck3" /> Player 3</div>
+                        <div><input type="checkbox" id="playerCheck4" /> Player 4</div>
+                        <div><input type="checkbox" id="playerCheck5" /> Player 5</div>
+                    </div>
+                </div>
+
+                <div class="row mb-2">
+                    <div class="col-md-6">
+                        <label class="form-label">Zone</label>
+                        <select id="zoneSelect" class="form-select"></select>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label">Dungeon</label>
+                        <select id="dungeonSelect" class="form-select"></select>
+                        <div class="form-check mt-1">
+                            <input class="form-check-input" type="checkbox" id="toggleDungeon">
+                            <label class="form-check-label" for="toggleDungeon">Use dungeon selection</label>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="row mb-2">
+                    <div class="col-md-4">
+                        <label class="form-label">Difficulty Tier</label>
+                        <input id="difficultySelect" type="number" class="form-control" value="0" min="0" max="10" />
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label">Simulation Hours</label>
+                        <input id="simulationHours" type="number" class="form-control" value="1" min="0.1" step="0.1" />
+                    </div>
+                </div>
+
+                <div class="row mb-3">
+                    <div class="col-md-4">
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" id="mooPassToggle">
+                            <label class="form-check-label" for="mooPassToggle">Moo Pass</label>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" id="comExpToggle">
+                            <label class="form-check-label" for="comExpToggle">Community EXP</label>
+                        </div>
+                        <input id="comExpInput" type="number" class="form-control mt-1" value="0" min="0" step="1" />
+                    </div>
+                    <div class="col-md-4">
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" id="comDropToggle">
+                            <label class="form-check-label" for="comDropToggle">Community Drops</label>
+                        </div>
+                        <input id="comDropInput" type="number" class="form-control mt-1" value="0" min="0" step="1" />
+                    </div>
+                </div>
+
+                <div class="mb-3">
+                    <button id="estimateBtn" class="btn btn-success">Estimate</button>
+                    <span id="progress" class="ms-2 text-muted"></span>
+                </div>
+            </div>
+        </div>
+
+        <div class="row">
+            <div class="col-12">
+                <h5>Results</h5>
+                <div id="result" class="border rounded p-2" style="min-height: 200px; background: #f8f9fa;"></div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.2.0/js/bootstrap.bundle.min.js" integrity="sha512-9GacT4119eY3AcosfWtHMsT5JyZudrexyEVzTBWV3viP/YfB9e2pEy3N7WXL3SV6ASXpTU0vzzSxsbfsuUH4sQ==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+    <script type="module" src="estimator.js"></script>
+</body>
+</html>

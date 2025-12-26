@@ -2,10 +2,13 @@ const path = require('path');
 const CopyWebpackPlugin = require('copy-webpack-plugin');
 
 module.exports = {
-  entry: './src/main.js',
+  entry: {
+    bundle: './src/main.js',
+    estimator: './src/averageEstimator.js',
+  },
   output: {
     path: path.resolve(__dirname, 'dist'),
-    filename: 'bundle.js',
+    filename: '[name].js',
     clean: true,
   },
   mode: 'development',
@@ -23,6 +26,7 @@ module.exports = {
       patterns: [
         { from: path.resolve(__dirname, 'patchNote.json'), to: 'patchNote.json' },
         { from: path.resolve(__dirname, 'index.html'), to: 'index.html' }, // Correctly copy to dist/index.html
+        { from: path.resolve(__dirname, 'averageEstimator.html'), to: 'averageEstimator.html' },
         { from: path.resolve(__dirname, 'js'), to: 'js' },
         { from: path.resolve(__dirname, 'locales'), to: 'locales' }
       ],
