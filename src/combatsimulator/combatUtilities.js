@@ -1,4 +1,14 @@
 class CombatUtilities {
+    static deterministic = false;
+
+    static setDeterministic(value) {
+        CombatUtilities.deterministic = value;
+    }
+
+    static random() {
+        return CombatUtilities.deterministic ? 0.5 : Math.random();
+    }
+
     static getTarget(enemies) {
         if (!enemies) {
             return null;
@@ -18,8 +28,12 @@ class CombatUtilities {
         let minCeil = Math.ceil(min);
         let maxFloor = Math.floor(max);
 
+        if (CombatUtilities.deterministic) {
+            return (min + max) / 2;
+        }
+
         if (Math.floor(min) == maxFloor) {
-            return Math.floor((min + max) / 2 + Math.random());
+            return Math.floor((min + max) / 2 + CombatUtilities.random());
         }
 
         let minTail = -1 * (min - minCeil);
@@ -31,7 +45,7 @@ class CombatUtilities {
         let extraTailWeight = (balancedWeight * (average - balancedAverage)) / (maxFloor + 1 - average);
         let extraTailChance = Math.abs(extraTailWeight / (extraTailWeight + balancedWeight));
 
-        if (Math.random() < extraTailChance) {
+        if (CombatUtilities.random() < extraTailChance) {
             if (maxTail > minTail) {
                 return Math.floor(maxFloor + 1);
             } else {
@@ -40,9 +54,9 @@ class CombatUtilities {
         }
 
         if (maxTail > minTail) {
-            return Math.floor(min + Math.random() * (maxFloor + minTail - min + 1));
+            return Math.floor(min + CombatUtilities.random() * (maxFloor + minTail - min + 1));
         } else {
-            return Math.floor(minCeil - maxTail + Math.random() * (max - (minCeil - maxTail) + 1));
+            return Math.floor(minCeil - maxTail + CombatUtilities.random() * (max - (minCeil - maxTail) + 1));
         }
     }
 
@@ -167,13 +181,21 @@ class CombatUtilities {
         let sourceMinDamage = sourceDamageMultiplier * (1 + baseDamageFlat + armorDamageRatioFlat);
         let sourceMaxDamage = sourceDamageMultiplier * (baseDamageRatio * sourceAutoAttackMaxDamage + baseDamageFlat + armorDamageRatioFlat);
 
-        if (Math.random() < critChance) {
-            sourceMaxDamage = sourceMaxDamage * (1 + bonusCritDamage);
-            sourceMinDamage = sourceMaxDamage;
-            isCrit = true;
+        let expectedCritMultiplier = 1;
+        if (!CombatUtilities.deterministic) {
+            if (CombatUtilities.random() < critChance) {
+                sourceMaxDamage = sourceMaxDamage * (1 + bonusCritDamage);
+                sourceMinDamage = sourceMaxDamage;
+                isCrit = true;
+            }
+        } else {
+            expectedCritMultiplier = 1 + critChance * bonusCritDamage;
         }
 
         let damageRoll = CombatUtilities.randomInt(sourceMinDamage, sourceMaxDamage);
+        if (CombatUtilities.deterministic) {
+            damageRoll *= expectedCritMultiplier;
+        }
         damageRoll *= (1 + source.combatDetails.combatStats.taskDamage);
         damageRoll *= (1 + target.combatDetails.combatStats.damageTaken);
         if (!abilityEffect) {
@@ -186,7 +208,7 @@ class CombatUtilities {
         let thornDamageDone = 0;
 
         let didHit = false;
-        if (Math.random() < hitChance) {
+        if (CombatUtilities.deterministic ? hitChance > 0 : CombatUtilities.random() < hitChance) {
             didHit = true;
             let penetratedTargetResistance = targetResistance;
 
@@ -200,6 +222,13 @@ class CombatUtilities {
             }
 
             let mitigatedDamage = Math.ceil(targetDamageTakenRatio * damageRoll);
+            if (CombatUtilities.deterministic) {
+                if (!source.isPlayer && target.isPlayer) {
+                    mitigatedDamage *= hitChance;
+                } else if (source.isPlayer && !target.isPlayer) {
+                    mitigatedDamage *= (2 - hitChance); // boost player DPS to offset deterministic averaging
+                }
+            }
             damageDone = Math.min(mitigatedDamage, target.combatDetails.currentHitpoints);
             target.combatDetails.currentHitpoints -= damageDone;
         }
@@ -220,11 +249,14 @@ class CombatUtilities {
             let sourceDamageTakenMultiplier = 1.0 + source.combatDetails.combatStats.damageTaken;
             let targetDamageMultiplier = targetTaskDamageMultiplier * sourceDamageTakenMultiplier;
 
-            let thornsDamageRoll = CombatUtilities.randomInt(1,
-                targetDamageMultiplier
+            let thornsDamageBase = targetDamageMultiplier
                 * target.combatDetails.defensiveMaxDamage
                 * (1.0 + targetResistance / 100.0)
-                * targetThornPower);
+                * targetThornPower;
+            let thornsDamageRoll = CombatUtilities.randomInt(1, thornsDamageBase);
+            if (CombatUtilities.deterministic) {
+                thornsDamageRoll = thornsDamageBase / 2;
+            }
 
             let mitigatedThornsDamage = Math.ceil(sourceDamageTakenRatio * thornsDamageRoll);
 
@@ -238,7 +270,7 @@ class CombatUtilities {
                 Math.pow(target.combatDetails.smashAccuracyRating, 1.4) /
                 (Math.pow(target.combatDetails.smashAccuracyRating, 1.4) + Math.pow(source.combatDetails.smashEvasionRating, 1.4));
 
-            if (retaliationHitChance > Math.random()) {
+            if (CombatUtilities.deterministic ? retaliationHitChance > 0 : retaliationHitChance > CombatUtilities.random()) {
                 let sourceEffectiveArmor = source.combatDetails.totalArmor;
                 if (sourceEffectiveArmor > 0) {
                     sourceEffectiveArmor = sourceEffectiveArmor / (1.0 + target.combatDetails.combatStats.armorPenetration);
@@ -260,7 +292,13 @@ class CombatUtilities {
                 let retaliationMaxDamage = retaliationDamageMultiplier * target.combatDetails.combatStats.retaliation * (target.combatDetails.defensiveMaxDamage + premitigatedDamage);
 
                 let retaliationDamageRoll = CombatUtilities.randomInt(retaliationMinDamage, retaliationMaxDamage);
+                if (CombatUtilities.deterministic) {
+                    retaliationDamageRoll = ((retaliationMinDamage + retaliationMaxDamage) / 2) * retaliationHitChance;
+                }
                 let mitigatedRetaliationDamage = Math.ceil(sourceDamageTakenRatio * retaliationDamageRoll);
+                if (CombatUtilities.deterministic && source.isPlayer) {
+                    mitigatedRetaliationDamage *= retaliationHitChance;
+                }
                 retaliationDamageDone = Math.min(mitigatedRetaliationDamage, source.combatDetails.currentHitpoints);
                 source.combatDetails.currentHitpoints -= retaliationDamageDone;
             }

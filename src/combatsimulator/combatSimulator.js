@@ -46,6 +46,8 @@ class CombatSimulator extends EventTarget {
             count: 0,
             maxSize: 200
         };
+
+        this.enemyRespawnInterval = CombatUtilities.deterministic ? ONE_SECOND : ENEMY_RESPAWN_INTERVAL;
     }
 
         addToWipeLogs(logEntry) {
@@ -327,6 +329,9 @@ class CombatSimulator extends EventTarget {
             }
             this.players[i].reset(this.simulationTime);
         }
+        if (event.time == 0) {
+            this.simResult.capturePlayerStats(this.players);
+        }
         let regenTickEvent = new RegenTickEvent(this.simulationTime + REGEN_TICK_INTERVAL);
         this.eventQueue.addEvent(regenTickEvent);
 
@@ -389,6 +394,8 @@ class CombatSimulator extends EventTarget {
         this.eventQueue.clearEventsOfType(AbilityCastEndEvent.type);
 
         this.startAttacks();
+
+        this.simResult.addEncounterEnemies(this.enemies, this.zone.encountersKilled - 1);
     }
 
     startAttacks() {
@@ -651,7 +658,7 @@ class CombatSimulator extends EventTarget {
         if (this.enemies && !this.enemies.some((enemy) => enemy.combatDetails.currentHitpoints > 0)) {
             this.eventQueue.clearEventsOfType(AutoAttackEvent.type);
             // this.eventQueue.clearEventsOfType(AbilityCastEndEvent.type);
-            let enemyRespawnEvent = new EnemyRespawnEvent(this.simulationTime + ENEMY_RESPAWN_INTERVAL);
+            let enemyRespawnEvent = new EnemyRespawnEvent(this.simulationTime + this.enemyRespawnInterval);
             this.eventQueue.addEvent(enemyRespawnEvent);
 
             //calc exp before clear
@@ -659,7 +666,7 @@ class CombatSimulator extends EventTarget {
                 console.log("WARN: Some enemies have no experience rate");
             }
 
-            let totalExp = this.enemies.map(enemy => enemy.experience * enemy.experienceRate).reduce((a, b) => a + b, 0);
+            let totalExp = this.enemies?.map(enemy => enemy.experience * enemy.experienceRate).reduce((a, b) => a + b, 0) ?? 0;
             this.players.forEach(player => {
                 this.simResult.addExperienceGain(player, totalExp / this.players.length);
             });
@@ -691,7 +698,8 @@ class CombatSimulator extends EventTarget {
             !this.players.some((player) => player.combatDetails.currentHitpoints > 0)
         ) {
             if (this.zone.isDungeon) {
-                console.log("All Players died at wave #" + (this.zone.encountersKilled - 1) + " with ememies: " + this.enemies.map(enemy => (enemy.hrid+"("+(enemy.combatDetails.currentHitpoints*100/enemy.combatDetails.maxHitpoints).toFixed(2)+"%)")).join(", "));
+                const enemyStatus = this.enemies ? this.enemies.map(enemy => (enemy.hrid+"("+(enemy.combatDetails.currentHitpoints*100/enemy.combatDetails.maxHitpoints).toFixed(2)+"%)")).join(", ") : "n/a";
+                console.log("All Players died at wave #" + (this.zone.encountersKilled - 1) + " with ememies: " + enemyStatus);
 
                 this.saveWipeLogsToSimResult(this.zone.encountersKilled - 1);
                 // console.log(this.simResult)
